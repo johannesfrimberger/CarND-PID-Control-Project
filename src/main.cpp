@@ -38,9 +38,10 @@ int main()
     uWS::Hub h;
     
     PID pid;
-    pid.Init(.2, 0., 0.);
+    pid.Init(.1, .0, 1.0);
     
-    h.onMessage([&pid](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
+    h.onMessage([&pid](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode)
+    {
         // "42" at the start of the message means there's a websocket message event.
         // The 4 signifies a websocket message
         // The 2 signifies a websocket event
@@ -64,6 +65,7 @@ int main()
                      */
                     
                     pid.UpdateError(cte);
+                    
                     const double steer_value = saturate<double>(pid.TotalError(), -1.0, 1.0);
                     
                     // DEBUG
@@ -76,7 +78,9 @@ int main()
                     std::cout << msg << std::endl;
                     ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
                 }
-            } else {
+            }
+            else
+            {
                 // Manual driving
                 std::string msg = "42[\"manual\",{}]";
                 ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
