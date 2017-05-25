@@ -1,27 +1,61 @@
 #include "PID.h"
 
-PID::PID() {}
+PID::PID(const bool optimization):
+    _optimization(optimization)
+{}
 
-PID::~PID() {}
+PID::~PID()
+{}
 
-void PID::Init(const double Kp_, const double Ki_, const double Kd_)
+void PID::Init(const double Kp, const double Ki, const double Kd)
 {
-    Kp = Kp_;
-    Ki = Ki_;
-    Kd = Kd_;
-    d_error = 0;
-    p_error = 0;
-    i_error = 0;
+    _Kp = Kp;
+    _Ki = Ki;
+    _Kd = Kd;
+    
+    _d_error = 0;
+    _p_error = 0;
+    _i_error = 0;
+    
+    _n_samples = 0U;
 }
 
-void PID::UpdateError(const double cte)
+bool PID::UpdateError(const double cte, const unsigned n_iterations)
 {
-    d_error = cte - p_error;
-    p_error = cte;
-    i_error += cte;
+    // Update internal storage
+    _d_error = cte - _p_error;
+    _p_error = cte;
+    _i_error += cte;
+    
+    bool reset = false;
+    
+    if(_optimization)
+    {
+        // Collect error for n_iterations
+        if(_n_samples < n_iterations)
+        {
+            _n_samples++;
+            std:: cout << _n_samples << std::endl;
+        }
+        else
+        {
+            // Set reset flag to true
+            reset = true;
+            
+            // ToDo: Twiddle parameters
+            const double Kp = _Kp;
+            const double Ki = _Ki;
+            const double Kd = _Kd;
+            
+            // Re-initialize PID controller
+            Init(Kp, Ki, Kd);
+        }
+    }
+    
+    return reset;
 }
 
 double PID::TotalError() const
 {
-    return -Kp * p_error - Kd * d_error - Ki * i_error;
+    return -_Kp * _p_error - _Kd * _d_error - _Ki * _i_error;
 }
