@@ -38,7 +38,7 @@ int main()
     uWS::Hub h;
     
     PID pid(true);
-    pid.Init(.1, .0, 1.0);
+    pid.Init(.11, .0, 2.0);
     
     h.onMessage([&pid](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode)
                 {
@@ -64,7 +64,8 @@ int main()
                                  * another PID controller to control the speed!
                                  */
                                 
-                                const bool reset = pid.UpdateError(cte);
+                                // Check if
+                                const bool reset = pid.UpdateError(cte, speed > 10.0);
                                 
                                 if(reset)
                                 {

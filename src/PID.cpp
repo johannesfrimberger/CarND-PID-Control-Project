@@ -1,8 +1,20 @@
 #include "PID.h"
+#include <cmath>
 
 PID::PID(const bool optimization):
-    _optimization(optimization)
-{}
+_optimization(optimization),
+_first_run(true)
+{
+    _best_error = 0;
+    
+    // Define initial opimization step size
+    _optimization_step_size[0] = 0.01;
+    _optimization_step_size[1] = 0.001;
+    _optimization_step_size[2] = 0.01;
+    
+    _optimizationParameter = 0U;
+    _optimization_stage = OS_INCREASE;
+}
 
 PID::~PID()
 {}
@@ -17,35 +29,76 @@ void PID::Init(const double Kp, const double Ki, const double Kd)
     _p_error = 0;
     _i_error = 0;
     
+    _total_error = 0;
     _n_samples = 0U;
+    
+    PrintStatus();
 }
 
-bool PID::UpdateError(const double cte, const unsigned n_iterations)
+bool PID::UpdateError(const double cte, const bool validSample, const unsigned n_samples)
 {
     // Update internal storage
     _d_error = cte - _p_error;
     _p_error = cte;
     _i_error += cte;
     
+    // Set return value intially to false
     bool reset = false;
     
-    if(_optimization)
+    // Run optimization if requested
+    if(_optimization && validSample)
     {
         // Collect error for n_iterations
-        if(_n_samples < n_iterations)
+        if(_n_samples < n_samples)
         {
+            // Increase sample counter and sum up total error
             _n_samples++;
-            std:: cout << _n_samples << std::endl;
+            _total_error += std::fabs(cte);
         }
         else
         {
             // Set reset flag to true
             reset = true;
             
-            // ToDo: Twiddle parameters
-            const double Kp = _Kp;
-            const double Ki = _Ki;
-            const double Kd = _Kd;
+            // Twiddle parameters
+            double Kp = _Kp;
+            double Ki = _Ki;
+            double Kd = _Kd;
+            
+            // Check if this was the first run and no reference error is available
+            if(_first_run)
+            {
+                // Set best error to those achieved by the current settings
+                _best_error = _total_error;
+                
+                _optimizationParameter = 0U;
+                _optimization_stage = OS_INCREASE;
+                
+                // Increase parameter
+                Kp += _optimization_step_size[0U];
+                
+                // Set first_run to false (Can only be reset when new object is created)
+                _first_run = false;
+            }
+            else
+            {
+                // Check which parameter should be optimized
+                switch(_optimizationParameter)
+                {
+                    case 0U:
+                        TwiddleParameter(Kp, _optimization_step_size[0U]);
+                        break;
+                    case 1U:
+                        TwiddleParameter(Ki, _optimization_step_size[1U]);
+                        break;
+                    case 2U:
+                        TwiddleParameter(Kd, _optimization_step_size[2U]);
+                        break;
+                    default:
+                        _optimizationParameter = 0U;
+                        break;
+                }
+            }
             
             // Re-initialize PID controller
             Init(Kp, Ki, Kd);
@@ -58,4 +111,62 @@ bool PID::UpdateError(const double cte, const unsigned n_iterations)
 double PID::TotalError() const
 {
     return -_Kp * _p_error - _Kd * _d_error - _Ki * _i_error;
+}
+
+void PID::TwiddleParameter(double &param, double& step)
+{
+    printf("Twiddle Parameter %d in Stage %d\n", _optimizationParameter, _optimization_stage);
+    
+    if(_optimization_stage == OS_PRE)
+    {
+        param += step;
+        _optimization_stage = OS_INCREASE;
+    }
+    else if(_optimization_stage == OS_INCREASE)
+    {
+        
+        printf("Total %f, Best %f\n", _total_error, _best_error);
+        
+        if(_total_error < _best_error)
+        {
+            std::cout << "Increase Better" << std::endl;
+            // Update best error and move on
+            _best_error = _total_error;
+            step *= 1.1;
+            
+            _optimizationParameter++;
+            _optimizationParameter = _optimizationParameter % 3U;
+            _optimization_stage = OS_PRE;
+        }
+        else
+        {
+            std::cout << "Increase Worse" << std::endl;
+            param -= 2 * step;
+            _optimization_stage = OS_DECREASE;
+        }
+    }
+    else if(_optimization_stage == OS_DECREASE)
+    {
+        printf("Total %f, Best %f\n", _total_error, _best_error);
+        
+        if(_total_error < _best_error)
+        {
+            std::cout << "Decrease Better" << std::endl;
+            // Update best error and move on
+            _best_error = _total_error;
+            step *= 1.1;
+        }
+        else
+        {
+            std::cout << "Decrease Worse" << std::endl;
+            // Reset parameter to initial value and move on with lower step size
+            param += step;
+            step *= 0.9;
+        }
+        
+        _optimizationParameter++;
+        _optimizationParameter = _optimizationParameter % 3U;
+        _optimization_stage = OS_PRE;
+        
+    }
 }

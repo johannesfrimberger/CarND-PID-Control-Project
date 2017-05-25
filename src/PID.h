@@ -25,7 +25,7 @@ public:
     /*
      * Update the PID error variables given cross track error.
      */
-    bool UpdateError(const double cte, const unsigned n_iterations = 200);
+    bool UpdateError(const double cte, const bool validSample, const unsigned n_samples = 400);
     
     /*
      * Calculate the total PID error.
@@ -45,6 +45,15 @@ public:
 
 private:
     
+    enum OptimizationStage
+    {
+        OS_PRE,
+        OS_INCREASE,
+        OS_DECREASE
+    };
+    
+    void TwiddleParameter(double &param, double& step);
+    
     /*
      * Errors
      */
@@ -59,9 +68,20 @@ private:
     double _Ki;
     double _Kd;
     
+    /*
+     * Parameters and internal storage for optimization
+     */
+    double _optimization_step_size[3];
+    double _total_error;
+    double _best_error;
+    
     unsigned _n_samples;
+    unsigned _optimizationParameter;
     
     bool _optimization;
+    bool _first_run;
+    
+    OptimizationStage _optimization_stage;
 };
 
 #endif /* PID_H */
