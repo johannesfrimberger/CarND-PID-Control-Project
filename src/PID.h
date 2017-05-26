@@ -45,13 +45,23 @@ public:
 
 private:
     
-    enum OptimizationStage
+    // State of twiddle optimization
+    enum OptimizationStageType
     {
         OS_PRE,
         OS_INCREASE,
         OS_DECREASE
     };
     
+    /*
+     * Start parameter optimization 
+     * (only one paramter is optimized at a time)
+     */
+    void runOptimization();
+    
+    /*
+     * Generic method to twiddle parameter
+     */
     void TwiddleParameter(double &param, double& step);
     
     /*
@@ -81,7 +91,7 @@ private:
     bool _optimization;
     bool _first_run;
     
-    OptimizationStage _optimization_stage;
+    OptimizationStageType _optimization_stage;
 };
 
 #endif /* PID_H */
