@@ -125,9 +125,6 @@ void PID::runOptimization()
 
 void PID::TwiddleParameter(double &param, double& step)
 {
-    // Debug Information
-    printf("Twiddle Parameter %d in Stage %d\n", _optimizationParameter, _optimization_stage);
-    
     // Increase param by step size
     if(_optimization_stage == OS_PRE)
     {
@@ -172,4 +169,7 @@ void PID::TwiddleParameter(double &param, double& step)
         _optimizationParameter++;
         _optimization_stage = OS_PRE;
     }
+    
+    // Debug Information
+    printf("Twiddle Parameter %d in Stage %d\n", _optimizationParameter + 1U, _optimization_stage);
 }

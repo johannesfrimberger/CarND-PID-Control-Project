@@ -3,6 +3,30 @@ Self-Driving Car Engineer Nanodegree Program
 
 ---
 
+## Reflection
+
+1. Describe the effect each of the P, I, D components had in your implementation.
+
+The P component of the PID controller was quite intuitive to use. By increasing
+its value the system reacted faster to an error.
+
+The integral part sums up a permanent error in the control-system and allows us to compensate for it.
+The value for integral component has to be chosen rather low.
+At the beginning even choosing 0 worked --> PD-Controller
+
+The differential part (D) measures how fast the error is reduced and therefore can help to reduce overshoots.
+Even small adjustments of this parameter can lead to an in-stable system.
+
+2. Describe how the final hyperparameters were chosen.
+
+An initial guess of the parameters was chosen manually and afterwards I applied
+twiddle.
+At the beginning the number of samples where chosen rather small to improve the
+initial guess. After finding appropriate parameters I reduced the step size and
+ran twiddle for a whole lap of the track.
+
+The speed PID controller parameters instead where chosen manually.
+
 ## Dependencies
 
 * cmake >= 3.5
@@ -25,7 +49,7 @@ Self-Driving Car Engineer Nanodegree Program
 1. Clone this repo.
 2. Make a build directory: `mkdir build && cd build`
 3. Compile: `cmake .. && make`
-4. Run it: `./pid`. 
+4. Run it: `./pid`.
 
 ## Editor Settings
 
