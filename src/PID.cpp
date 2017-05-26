@@ -10,7 +10,7 @@ _first_run(true)
     
     // Define initial opimization step size
     _optimization_step_size[0] = 0.01;
-    _optimization_step_size[1] = 0.001;
+    _optimization_step_size[1] = 0.0001;
     _optimization_step_size[2] = 0.01;
     
     _optimizationParameter = 0U;
